@@ -14,6 +14,59 @@ import {
   Loader2,
 } from "lucide-react";
 
+const KNOWN_SIGNATURES: { magic: number[]; type: string; display: string }[] = [
+  { magic: [0xFF, 0xD8, 0xFF], type: "JPEG Image", display: "FF D8 FF" },
+  { magic: [0x89, 0x50, 0x4E, 0x47], type: "PNG Image", display: "89 50 4E 47" },
+  { magic: [0x47, 0x49, 0x46, 0x38], type: "GIF Image", display: "47 49 46 38" },
+  { magic: [0x25, 0x50, 0x44, 0x46], type: "PDF Document", display: "25 50 44 46" },
+  { magic: [0x50, 0x4B, 0x03, 0x04], type: "ZIP/Office Archive", display: "50 4B 03 04" },
+  { magic: [0x4D, 0x5A], type: "PE32 Executable", display: "4D 5A" },
+  { magic: [0x7F, 0x45, 0x4C, 0x46], type: "ELF Executable", display: "7F 45 4C 46" },
+  { magic: [0x52, 0x61, 0x72, 0x21], type: "RAR Archive", display: "52 61 72 21" },
+  { magic: [0x1F, 0x8B], type: "GZIP Archive", display: "1F 8B" },
+  { magic: [0x42, 0x4D], type: "BMP Image", display: "42 4D" },
+  { magic: [0x49, 0x44, 0x33], type: "MP3 Audio", display: "49 44 33" },
+  { magic: [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], type: "MP4 Video", display: "00 00 00 18 66 74 79 70" },
+  { magic: [0x52, 0x49, 0x46, 0x46], type: "RIFF (WAV/AVI)", display: "52 49 46 46" },
+  { magic: [0x4F, 0x67, 0x67, 0x53], type: "OGG Media", display: "4F 67 67 53" },
+  { magic: [0x66, 0x4C, 0x61, 0x43], type: "FLAC Audio", display: "66 4C 61 43" },
+  { magic: [0x37, 0x7A, 0xBC, 0xAF], type: "7-Zip Archive", display: "37 7A BC AF" },
+  { magic: [0xCA, 0xFE, 0xBA, 0xBE], type: "Java Class", display: "CA FE BA BE" },
+  { magic: [0x23, 0x21], type: "Shell Script", display: "23 21" },
+];
+
+function readMagicBytes(file: File): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(file.slice(0, 16));
+  });
+}
+
+function identifyFile(bytes: Uint8Array): { type: string; display: string } | null {
+  for (const sig of KNOWN_SIGNATURES) {
+    if (sig.magic.every((b, i) => bytes[i] === b)) {
+      return { type: sig.type, display: sig.display };
+    }
+  }
+  return null;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map((b) => b.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+}
+
+function getExpectedType(ext: string): string | null {
+  const map: Record<string, string> = {
+    jpg: "FF D8 FF", jpeg: "FF D8 FF", png: "89 50 4E 47", gif: "47 49 46 38",
+    pdf: "25 50 44 46", zip: "50 4B 03 04", exe: "4D 5A", bmp: "42 4D",
+    mp3: "49 44 33", rar: "52 61 72 21", gz: "1F 8B", "7z": "37 7A BC AF",
+    doc: "D0 CF 11 E0", docx: "50 4B 03 04", xlsx: "50 4B 03 04",
+  };
+  return map[ext.toLowerCase()] ?? null;
+}
+
 interface ScannedFile {
   name: string;
   extension: string;
@@ -86,6 +139,7 @@ const demoFiles: { name: string; desc: string; icon: typeof FileText; result: Sc
 export default function Scanner() {
   const [files, setFiles] = useState<ScannedFile[]>([]);
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
+  const [realFiles, setRealFiles] = useState<Map<string, File>>(new Map());
   const [scanning, setScanning] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
   const [filter, setFilter] = useState<"all" | "suspicious">("all");
@@ -97,37 +151,84 @@ export default function Scanner() {
     }
   };
 
-  const handleAnalysis = () => {
+  const addRealFiles = (fileList: File[]) => {
+    const newMap = new Map(realFiles);
+    const newNames: string[] = [];
+    fileList.forEach((f) => {
+      if (!uploadedNames.includes(f.name) && !newNames.includes(f.name)) {
+        newMap.set(f.name, f);
+        newNames.push(f.name);
+      }
+    });
+    setRealFiles(newMap);
+    setUploadedNames((p) => [...p, ...newNames]);
+  };
+
+  const analyzeRealFile = async (file: File): Promise<ScannedFile> => {
+    const bytes = await readMagicBytes(file);
+    const hex = bytesToHex(bytes);
+    const match = identifyFile(bytes);
+    const ext = file.name.includes(".") ? file.name.split(".").pop()! : "";
+    const expectedHex = getExpectedType(ext);
+
+    const detectedType = match?.type ?? "Unknown";
+    const mismatch = expectedHex != null && match != null && !expectedHex.startsWith(match.display.slice(0, expectedHex.length));
+    const status: ScannedFile["status"] = match
+      ? mismatch ? "suspicious" : "legitimate"
+      : "unknown";
+
+    return {
+      name: file.name,
+      extension: ext ? `.${ext}` : "N/A",
+      detectedType,
+      magicBytes: hex.slice(0, 23), // first 8 bytes display
+      confidence: match ? (mismatch ? 95 : 98) : 30,
+      status,
+      headerComparison: {
+        expected: expectedHex ? `${expectedHex} (${ext.toUpperCase()})` : "N/A",
+        actual: match ? `${match.display} (${detectedType})` : hex.slice(0, 11),
+      },
+    };
+  };
+
+  const handleAnalysis = async () => {
     setScanning(true);
     setAnalyzed(false);
-    setTimeout(() => {
-      const results = uploadedNames.map((name) => {
+
+    const results: ScannedFile[] = [];
+    for (const name of uploadedNames) {
+      const realFile = realFiles.get(name);
+      if (realFile) {
+        results.push(await analyzeRealFile(realFile));
+      } else {
         const demo = demoFiles.find((d) => d.name === name);
-        return demo?.result ?? {
+        results.push(demo?.result ?? {
           name,
           extension: name.includes(".") ? "." + name.split(".").pop() : "N/A",
           detectedType: "Unknown",
           magicBytes: "-- -- -- --",
           confidence: 50,
           status: "unknown" as const,
-        };
-      });
-      setFiles(results);
-      setScanning(false);
-      setAnalyzed(true);
-    }, 2000);
+        });
+      }
+    }
+
+    // Small delay for UX
+    await new Promise((r) => setTimeout(r, 1500));
+    setFiles(results);
+    setScanning(false);
+    setAnalyzed(true);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    setUploadedNames((p) => [...p, ...droppedFiles.map((f) => f.name)]);
-  }, []);
+    addRealFiles(Array.from(e.dataTransfer.files));
+  }, [realFiles, uploadedNames]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setUploadedNames((p) => [...p, ...Array.from(e.target.files!).map((f) => f.name)]);
+      addRealFiles(Array.from(e.target.files));
     }
   };
 
