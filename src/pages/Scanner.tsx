@@ -207,44 +207,50 @@ export default function Scanner() {
     if (uploadedNames.length === 0) return;
     setScanning(true);
     setAnalyzed(false);
+    setFiles([]);
 
     const results: ScannedFile[] = [];
     for (const name of uploadedNames) {
+      let result: ScannedFile;
       const realFile = realFiles.get(name);
       if (realFile) {
-        results.push(await analyzeRealFile(realFile));
+        result = await analyzeRealFile(realFile);
       } else {
         const demo = demoFiles.find((d) => d.name === name);
-        results.push(demo?.result ?? {
+        result = demo?.result ?? {
           name, extension: name.includes(".") ? "." + name.split(".").pop() : "N/A",
           detectedType: "Unknown", magicBytes: "-- -- -- --", confidence: 50,
           status: "unknown" as const, category: "unknown",
+        };
+      }
+
+      results.push(result);
+      setFiles([...results]);
+
+      // Real-time per-file notification
+      if (result.status === "suspicious") {
+        toast({
+          variant: "destructive",
+          title: `⚠️ Suspicious: ${result.name}`,
+          description: `Detected ${result.detectedType} — extension mismatch!`,
+        });
+      } else if (result.status === "unknown") {
+        toast({
+          title: `ℹ️ Unknown: ${result.name}`,
+          description: "Could not identify file type from magic bytes.",
         });
       }
+
+      // Small delay between files for visual feedback
+      await new Promise((r) => setTimeout(r, 400));
     }
 
-    await new Promise((r) => setTimeout(r, 1200));
-    setFiles(results);
     setScanning(false);
     setAnalyzed(true);
 
-    // Alert for suspicious / unknown
+    // Final summary
     const suspicious = results.filter((f) => f.status === "suspicious");
     const unknown = results.filter((f) => f.status === "unknown");
-
-    if (suspicious.length > 0) {
-      toast({
-        variant: "destructive",
-        title: `⚠️ ${suspicious.length} Suspicious File${suspicious.length > 1 ? "s" : ""} Detected`,
-        description: suspicious.map((f) => f.name).join(", "),
-      });
-    }
-    if (unknown.length > 0) {
-      toast({
-        title: `ℹ️ ${unknown.length} Unknown File${unknown.length > 1 ? "s" : ""}`,
-        description: "Could not identify: " + unknown.map((f) => f.name).join(", "),
-      });
-    }
     if (suspicious.length === 0 && unknown.length === 0) {
       toast({ title: "✅ All files look legitimate", description: `${results.length} file(s) scanned successfully.` });
     }
