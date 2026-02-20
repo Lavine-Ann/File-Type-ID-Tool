@@ -52,7 +52,7 @@ function readMagicBytes(file: File): Promise<Uint8Array> {
     const reader = new FileReader();
     reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
     reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file.slice(0, 16));
+    reader.readAsArrayBuffer(file.slice(0, 32));
   });
 }
 
@@ -110,6 +110,7 @@ interface ScannedFile {
   status: "legitimate" | "suspicious" | "unknown";
   category: string;
   headerComparison?: { expected: string; actual: string };
+  rawBytes?: number[];
 }
 
 const demoFiles: { name: string; desc: string; icon: typeof FileText; result: ScannedFile }[] = [
@@ -194,6 +195,7 @@ export default function Scanner() {
       name: file.name, extension: ext ? `.${ext}` : "N/A", detectedType,
       magicBytes: hex.slice(0, 23), confidence: match ? (mismatch ? 95 : 98) : 30,
       status, category,
+      rawBytes: Array.from(bytes.slice(0, 16)),
       headerComparison: {
         expected: expectedHex ? `${expectedHex} (${ext.toUpperCase()})` : "N/A",
         actual: match ? `${match.display} (${detectedType})` : hex.slice(0, 11),
@@ -424,6 +426,61 @@ export default function Scanner() {
               </tbody>
             </table>
           </div>
+
+          {/* Hex Viewer */}
+          {files.some((f) => f.rawBytes && f.rawBytes.length > 0) && (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Hex Viewer — First 16 Bytes</h3>
+              <div className="space-y-3">
+                {files.filter((f) => f.rawBytes && f.rawBytes.length > 0).map((f, i) => (
+                  <div key={i} className={f.status === "suspicious" ? "cyber-card-danger" : "cyber-card"}>
+                    <div className="flex items-center gap-2 mb-3">
+                      {getFileTypeIcon(f.category, f.status)}
+                      <p className="font-mono text-xs text-foreground font-semibold">{f.name}</p>
+                      {statusLabel(f.status)}
+                    </div>
+                    <div className="grid grid-cols-[auto_1fr_auto] gap-4 items-start">
+                      {/* Offset + Hex */}
+                      <div className="font-mono text-xs space-y-1">
+                        <span className="text-muted-foreground">Offset</span>
+                        <div className="text-muted-foreground">00</div>
+                        {f.rawBytes!.length > 8 && <div className="text-muted-foreground">08</div>}
+                      </div>
+                      <div className="font-mono text-xs space-y-1">
+                        <span className="text-muted-foreground">Hex</span>
+                        <div className="flex gap-1 flex-wrap">
+                          {f.rawBytes!.slice(0, 8).map((b, j) => (
+                            <span key={j} className={`px-1 py-0.5 rounded ${j < 4 ? "bg-primary/20 text-primary" : "text-foreground"}`}>
+                              {b.toString(16).toUpperCase().padStart(2, "0")}
+                            </span>
+                          ))}
+                        </div>
+                        {f.rawBytes!.length > 8 && (
+                          <div className="flex gap-1 flex-wrap">
+                            {f.rawBytes!.slice(8, 16).map((b, j) => (
+                              <span key={j} className="px-1 py-0.5 text-foreground">{b.toString(16).toUpperCase().padStart(2, "0")}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {/* ASCII */}
+                      <div className="font-mono text-xs space-y-1">
+                        <span className="text-muted-foreground">ASCII</span>
+                        <div className="text-accent">
+                          {f.rawBytes!.slice(0, 8).map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("")}
+                        </div>
+                        {f.rawBytes!.length > 8 && (
+                          <div className="text-accent">
+                            {f.rawBytes!.slice(8, 16).map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Header Comparison */}
           <div>
