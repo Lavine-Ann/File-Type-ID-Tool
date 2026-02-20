@@ -149,6 +149,7 @@ export default function Scanner() {
   const [analyzed, setAnalyzed] = useState(false);
   const [filter, setFilter] = useState<"all" | "suspicious">("all");
   const [dragOver, setDragOver] = useState(false);
+  const [threatBanner, setThreatBanner] = useState<{ suspicious: string[]; unknown: string[] } | null>(null);
   const { toast } = useToast();
 
   const addDemoFile = (demo: (typeof demoFiles)[number]) => {
@@ -248,10 +249,16 @@ export default function Scanner() {
     setScanning(false);
     setAnalyzed(true);
 
-    // Final summary
+    // Final summary + persistent banner
     const suspicious = results.filter((f) => f.status === "suspicious");
     const unknown = results.filter((f) => f.status === "unknown");
-    if (suspicious.length === 0 && unknown.length === 0) {
+    if (suspicious.length > 0 || unknown.length > 0) {
+      setThreatBanner({
+        suspicious: suspicious.map((f) => f.name),
+        unknown: unknown.map((f) => f.name),
+      });
+    } else {
+      setThreatBanner(null);
       toast({ title: "✅ All files look legitimate", description: `${results.length} file(s) scanned successfully.` });
     }
   };
@@ -302,6 +309,38 @@ export default function Scanner() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Persistent Threat Banner */}
+      {threatBanner && (
+        <div className="relative rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <button
+            onClick={() => setThreatBanner(null)}
+            className="absolute right-3 top-3 rounded-md p-1 text-destructive/70 hover:text-destructive transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-start gap-3 pr-6">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-destructive">Threat Detected</h4>
+              {threatBanner.suspicious.length > 0 && (
+                <p className="text-xs text-destructive/90">
+                  <span className="font-medium">Suspicious:</span>{" "}
+                  {threatBanner.suspicious.join(", ")}
+                </p>
+              )}
+              {threatBanner.unknown.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Unknown:</span>{" "}
+                  {threatBanner.unknown.join(", ")}
+                </p>
+              )}
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Review flagged files carefully before opening. This banner stays until you dismiss it.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Upload Zone */}
       <div
         className={`upload-zone ${dragOver ? "active" : ""}`}
