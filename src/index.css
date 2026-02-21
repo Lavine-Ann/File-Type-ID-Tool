@@ -6,62 +6,62 @@
 
 @layer base {
   :root {
-    --background: 220 20% 7%;
+    --background: 225 60% 6%;
     --foreground: 210 20% 90%;
 
-    --card: 220 18% 10%;
+    --card: 225 50% 9%;
     --card-foreground: 210 20% 90%;
 
-    --popover: 220 18% 10%;
+    --popover: 225 50% 9%;
     --popover-foreground: 210 20% 90%;
 
-    --primary: 160 100% 45%;
-    --primary-foreground: 220 20% 7%;
+    --primary: 193 100% 42%;
+    --primary-foreground: 225 60% 6%;
 
-    --secondary: 220 15% 15%;
+    --secondary: 225 40% 14%;
     --secondary-foreground: 210 20% 85%;
 
-    --muted: 220 15% 13%;
+    --muted: 225 35% 12%;
     --muted-foreground: 215 15% 55%;
 
-    --accent: 195 100% 50%;
-    --accent-foreground: 220 20% 7%;
+    --accent: 174 55% 39%;
+    --accent-foreground: 225 60% 6%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 355 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
     --warning: 38 92% 55%;
-    --warning-foreground: 220 20% 7%;
+    --warning-foreground: 225 60% 6%;
 
-    --success: 160 100% 45%;
-    --success-foreground: 220 20% 7%;
+    --success: 174 55% 39%;
+    --success-foreground: 225 60% 6%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 15%;
-    --ring: 160 100% 45%;
+    --border: 225 35% 17%;
+    --input: 225 40% 14%;
+    --ring: 193 100% 42%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 20% 5%;
+    --sidebar-background: 225 60% 4%;
     --sidebar-foreground: 210 15% 65%;
-    --sidebar-primary: 160 100% 45%;
-    --sidebar-primary-foreground: 220 20% 7%;
-    --sidebar-accent: 220 15% 12%;
+    --sidebar-primary: 193 100% 42%;
+    --sidebar-primary-foreground: 225 60% 6%;
+    --sidebar-accent: 225 40% 11%;
     --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 220 15% 14%;
-    --sidebar-ring: 160 100% 45%;
+    --sidebar-border: 225 35% 13%;
+    --sidebar-ring: 193 100% 42%;
 
-    --cyber-glow: 0 0 20px hsl(160 100% 45% / 0.3);
-    --cyber-glow-accent: 0 0 20px hsl(195 100% 50% / 0.3);
-    --cyber-glow-danger: 0 0 20px hsl(0 72% 55% / 0.3);
+    --cyber-glow: 0 0 20px hsl(193 100% 42% / 0.3);
+    --cyber-glow-accent: 0 0 20px hsl(174 55% 39% / 0.3);
+    --cyber-glow-danger: 0 0 20px hsl(355 72% 56% / 0.3);
 
-    --gradient-cyber: linear-gradient(135deg, hsl(160 100% 45%), hsl(195 100% 50%));
-    --gradient-danger: linear-gradient(135deg, hsl(0 72% 55%), hsl(38 92% 55%));
-    --gradient-card: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 18% 8%));
+    --gradient-cyber: linear-gradient(135deg, hsl(193 100% 42%), hsl(174 55% 39%));
+    --gradient-danger: linear-gradient(135deg, hsl(355 72% 56%), hsl(38 92% 55%));
+    --gradient-card: linear-gradient(180deg, hsl(225 50% 11%), hsl(225 50% 7%));
   }
 
   .dark {
-    --background: 220 20% 7%;
+    --background: 225 60% 6%;
     --foreground: 210 20% 90%;
   }
 }
@@ -87,32 +87,32 @@
 @layer components {
   .cyber-card {
     @apply bg-card border border-border rounded-lg p-4 transition-all duration-300;
-    background: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 18% 8%));
+    background: linear-gradient(180deg, hsl(225 50% 11%), hsl(225 50% 7%));
   }
 
   .cyber-card:hover {
-    border-color: hsl(160 100% 45% / 0.4);
-    box-shadow: 0 0 20px hsl(160 100% 45% / 0.1);
+    border-color: hsl(193 100% 42% / 0.4);
+    box-shadow: 0 0 20px hsl(193 100% 42% / 0.1);
   }
 
   .cyber-card-danger {
     @apply bg-card border rounded-lg p-4;
-    border-color: hsl(0 72% 55% / 0.4);
-    background: linear-gradient(180deg, hsl(0 72% 55% / 0.08), hsl(220 18% 8%));
+    border-color: hsl(355 72% 56% / 0.4);
+    background: linear-gradient(180deg, hsl(355 72% 56% / 0.08), hsl(225 50% 7%));
   }
 
   .cyber-card-warning {
     @apply bg-card border rounded-lg p-4;
     border-color: hsl(38 92% 55% / 0.4);
-    background: linear-gradient(180deg, hsl(38 92% 55% / 0.08), hsl(220 18% 8%));
+    background: linear-gradient(180deg, hsl(38 92% 55% / 0.08), hsl(225 50% 7%));
   }
 
   .cyber-glow {
-    box-shadow: 0 0 20px hsl(160 100% 45% / 0.15), inset 0 1px 0 hsl(160 100% 45% / 0.1);
+    box-shadow: 0 0 20px hsl(193 100% 42% / 0.15), inset 0 1px 0 hsl(193 100% 42% / 0.1);
   }
 
   .glow-text {
-    text-shadow: 0 0 10px hsl(160 100% 45% / 0.5);
+    text-shadow: 0 0 10px hsl(193 100% 42% / 0.5);
   }
 
   .hex-display {
@@ -123,7 +123,7 @@
   .scan-line {
     background: linear-gradient(
       transparent 0%,
-      hsl(160 100% 45% / 0.05) 50%,
+      hsl(193 100% 42% / 0.05) 50%,
       transparent 100%
     );
     animation: scan 3s linear infinite;
@@ -131,27 +131,27 @@
 
   .upload-zone {
     @apply border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer;
-    border-color: hsl(220 15% 25%);
+    border-color: hsl(225 35% 25%);
   }
 
   .upload-zone:hover, .upload-zone.active {
-    border-color: hsl(160 100% 45% / 0.6);
-    background: hsl(160 100% 45% / 0.03);
-    box-shadow: 0 0 30px hsl(160 100% 45% / 0.08);
+    border-color: hsl(193 100% 42% / 0.6);
+    background: hsl(193 100% 42% / 0.03);
+    box-shadow: 0 0 30px hsl(193 100% 42% / 0.08);
   }
 
   .progress-bar-cyber {
     @apply h-2 rounded-full overflow-hidden;
-    background: hsl(220 15% 15%);
+    background: hsl(225 40% 14%);
   }
 
   .progress-bar-cyber .fill {
     @apply h-full rounded-full transition-all duration-500;
-    background: linear-gradient(90deg, hsl(160 100% 45%), hsl(195 100% 50%));
+    background: linear-gradient(90deg, hsl(193 100% 42%), hsl(174 55% 39%));
   }
 
   .progress-bar-danger .fill {
-    background: linear-gradient(90deg, hsl(0 72% 55%), hsl(38 92% 55%));
+    background: linear-gradient(90deg, hsl(355 72% 56%), hsl(38 92% 55%));
   }
 
   .stat-card {
@@ -165,13 +165,13 @@
   }
 
   .table-row-suspicious {
-    background: hsl(0 72% 55% / 0.06);
-    border-left: 3px solid hsl(0 72% 55%);
+    background: hsl(355 72% 56% / 0.06);
+    border-left: 3px solid hsl(355 72% 56%);
   }
 
   .table-row-unknown {
-    background: hsl(195 100% 50% / 0.04);
-    border-left: 3px solid hsl(195 100% 50%);
+    background: hsl(174 55% 39% / 0.04);
+    border-left: 3px solid hsl(174 55% 39%);
   }
 }
 
@@ -192,8 +192,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px hsl(160 100% 45% / 0.3); }
-  50% { box-shadow: 0 0 20px hsl(160 100% 45% / 0.6); }
+  0%, 100% { box-shadow: 0 0 5px hsl(193 100% 42% / 0.3); }
+  50% { box-shadow: 0 0 20px hsl(193 100% 42% / 0.6); }
 }
 
 @keyframes reveal {
