@@ -150,6 +150,7 @@ export default function Scanner() {
   const [filter, setFilter] = useState<"all" | "suspicious">("all");
   const [dragOver, setDragOver] = useState(false);
   const [threatBanner, setThreatBanner] = useState<{ suspicious: string[]; unknown: string[] } | null>(null);
+  const [scanProgress, setScanProgress] = useState<{ current: number; total: number; currentFile: string } | null>(null);
   const { toast } = useToast();
 
   const addDemoFile = (demo: (typeof demoFiles)[number]) => {
@@ -209,9 +210,12 @@ export default function Scanner() {
     setScanning(true);
     setAnalyzed(false);
     setFiles([]);
+    setScanProgress({ current: 0, total: uploadedNames.length, currentFile: uploadedNames[0] });
 
     const results: ScannedFile[] = [];
-    for (const name of uploadedNames) {
+    for (let idx = 0; idx < uploadedNames.length; idx++) {
+      const name = uploadedNames[idx];
+      setScanProgress({ current: idx, total: uploadedNames.length, currentFile: name });
       let result: ScannedFile;
       const realFile = realFiles.get(name);
       if (realFile) {
@@ -246,6 +250,7 @@ export default function Scanner() {
       await new Promise((r) => setTimeout(r, 400));
     }
 
+    setScanProgress(null);
     setScanning(false);
     setAnalyzed(true);
 
@@ -394,13 +399,30 @@ export default function Scanner() {
         {scanning ? "Scanning..." : "Start Analysis"}
       </button>
 
-      {/* Scanning animation */}
-      {scanning && (
-        <div className="cyber-card relative overflow-hidden">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
-            <div className="h-full w-1/2 rounded-full bg-primary animate-scan-sweep" />
+      {/* Batch Scan Progress */}
+      {scanning && scanProgress && (
+        <div className="cyber-card space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                Scanning file {scanProgress.current + 1} of {scanProgress.total}
+              </span>
+            </div>
+            <span className="font-mono text-xs text-muted-foreground">
+              {Math.round(((scanProgress.current) / scanProgress.total) * 100)}%
+            </span>
           </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">Analyzing file headers and magic bytes…</p>
+          <div className="progress-bar-cyber">
+            <div
+              className="fill"
+              style={{ width: `${((scanProgress.current) / scanProgress.total) * 100}%` }}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-mono text-xs text-accent truncate">{scanProgress.currentFile}</span>
+          </div>
         </div>
       )}
 
