@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Shield,
+  Fingerprint,
 } from "lucide-react";
 
 const navItems = [
@@ -23,9 +24,31 @@ const navItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+function useRealTimeClock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const formatted = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const time = now.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  return `${formatted} | ${time}`;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const clock = useRealTimeClock();
 
   return (
     <div className="flex min-h-screen w-full">
@@ -49,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div>
             <h1 className="text-sm font-bold text-foreground glow-text">File Type ID</h1>
-            <p className="text-[10px] text-muted-foreground">Content-Based Analysis</p>
+            <p className="text-[10px] text-muted-foreground">MagicByte Labs</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -100,19 +123,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
           <div className="flex-1">
             <h2 className="text-sm font-semibold text-foreground">
-              File Type ID - Content-Based File Analysis
+              Magic Byte Analyzer — Content-Based File Analysis
             </h2>
             <p className="text-xs text-muted-foreground hidden sm:block">
-              Detecting disguised malware by analyzing file signatures, not extensions
+              {clock}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Fingerprint className="h-4 w-4 text-primary opacity-60" />
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
-            <span className="text-xs text-muted-foreground">System Active</span>
+            <span className="text-xs text-muted-foreground">Online</span>
           </div>
         </header>
 
         <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
+
+        <footer className="border-t border-border px-4 py-2 text-center">
+          <p className="text-[10px] text-muted-foreground">
+            © 2026 FileTypeID Security — MagicByte Labs. All rights reserved.
+          </p>
+        </footer>
       </div>
     </div>
   );
